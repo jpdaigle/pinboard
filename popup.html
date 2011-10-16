@@ -3,6 +3,9 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"/>
 		<title>Pinboard Toolbar Button</title>
         <style type="text/css">
+            body {
+                overflow-x: hidden;
+            }
             div.menu-item {
                 font: normal 12px helvetica, arial, verdana;
                 padding: 4px; 
@@ -11,10 +14,24 @@
                 color: #555;
                 width: 143;
                 background-color: #fff;
-                background-image: url('gray_star.png');
                 background-repeat: no-repeat;
                 background-position: 5px 5px; 	
                 border-bottom: 1px solid #eee;			
+            }
+
+            div.iconStar {
+                background-image: url('gray_star.png');
+            }
+            div.iconStar:hover {
+                background-image: url('blue_star.png');
+            }
+
+            div.iconClock {
+                background-image: url('clock32gray.png');
+                background-size: 12px;
+            }
+            div.iconClock:hover {
+                background-image: url('clock32.png');
             }
 
             div.menu-item:first-child {
@@ -31,15 +48,15 @@
             div.menu-item:hover {
                 color: #11A;	
                 background-color: #f2f2f2;
-                background-image: url('blue_star.png');	
             }
         </style>
+		<script src="jquery.min.js"></script>
 		<script type="text/javascript">
 			function addMenuItem(show, name, onClickFunction) {
 				if ("yes" == show) {
 					var parentElement = document.getElementById("menu");
 					var menuItemElement = document.createElement("div");
-					menuItemElement.setAttribute("class", "menu-item");
+					menuItemElement.setAttribute("class", "menu-item iconstar");
 					menuItemElement.setAttribute("onclick", onClickFunction);
 					menuItemElement.appendChild(document.createTextNode(name));
 					parentElement.appendChild(menuItemElement);
@@ -48,7 +65,8 @@
 			
 			function addMenuItems() {
 				var options = chrome.extension.getBackgroundPage().getOptionAll();
-                if (options.userName && "" != options.userName) {
+                window.pinboardOptions = options; //save as global
+                if (options.userName && "" != options.userName && options.password && "" !== options.password) {
 					addMenuItem(options.showAllBookmarks, "All Bookmarks", "openUrl(\"http://pinboard.in/u:" + options.userName + "/\");");
 					addMenuItem(options.showPrivateBookmarks, "Private Bookmarks", "openUrl(\"http://pinboard.in/u:" + options.userName + "/private/\");");
 					addMenuItem(options.showPublicBookmarks, "Public Bookmarks", "openUrl(\"http://pinboard.in/u:" + options.userName + "/public/\");");
@@ -57,6 +75,7 @@
 					addMenuItem(options.showStarredBookmarks, "Starred Bookmarks", "openUrl(\"http://pinboard.in/u:" + options.userName + "/starred/\");");
 					addMenuItem(options.showSaveBookmark, "Save Bookmark", "saveBookmark();");
 					addMenuItem(options.showReadLater, "Read Later", "readLater();");
+                    $("#bookmarkPane").show();
 				}
 				else {
 					addMenuItem("yes", "Setup User Name", "openUrl(\"" + chrome.extension.getURL("options.html") + "\");");
@@ -93,10 +112,76 @@
                 });
             }
 		</script>
+		
+		<script>
+            function fetchTest() {
+                var target_div = $("#bookmarkPane");
+
+                var spinner = $("<div style='text-align:center; width:100%; padding: 4px;'><img src='spinner.gif'/></div>");
+                target_div.append(spinner);
+
+                function addPost(postItem) {
+                    var href = postItem.attr("href");
+                    var lnkDiv = $("<div class='bookmarkItem'></div>");
+                    var lnk = $("<a href='#'>" + postItem.attr("description") + "</a>");
+                    lnk.appendTo(lnkDiv);
+                    lnk.attr("title", href);
+                    lnk.click(function() {
+                        openUrl(href)
+                    });
+                    lnkDiv.appendTo(target_div);
+                }
+
+                $.ajax({
+                    url: "https://api.pinboard.in/v1/posts/recent?count=25",
+                    username:pinboardOptions.userName,
+                    password:pinboardOptions.password,
+                    cache: false,
+                    success: function(html) {
+                        spinner.remove();
+                        $(html).find("post").each(function(a, postItem) {
+                            // we transform the XML returned by pinboard API to usable links
+                            addPost($(postItem));
+                        });
+                    },
+                    error: function(jqxhr, textStatus, errorThrown) {
+                        spinner.remove();
+                        var errormsg = $("<div style='color:#ee0000'>" + textStatus + " " + errorThrown + "</div>");
+                        errormsg.appendTo(target_div);
+                    }
+                });
+            }
+        </script>
+        <style type="text/css">
+            div#bookmarkPane {
+                font: normal 12px helvetica, arial, verdana;
+                color: #555;
+                /*background-color: #fff;*/
+                border-top: 1px solid #eee
+            }
+			div.bookmarkItem {
+				padding: 4px 0 2px 0;
+                overflow-x: hidden;
+                opacity: 0.75;
+			}
+			div.bookmarkItem a {
+				text-decoration: none;
+			}
+            div.bookmarkItem:hover {
+                color: #11A;
+                background-color: #f2f2f2;
+                opacity: 1;
+            }
+		</style>
   	</head>
   	<body onload="addMenuItems()">
   		<div id="menu">
   		</div>
+		<div id="bookmarkPane" style="display:hidden">
+            <div id="fetchItem" class="menu-item iconClock" style="" onclick="fetchTest();">
+                Latest
+            </div>
+		</div>
 	</body>
 </html>
 
