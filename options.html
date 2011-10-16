@@ -121,6 +121,7 @@
 			function loadOptions() {
 				var options = chrome.extension.getBackgroundPage().getOptionAll();
 				setTextValue("userName", options.userName);
+                setTextValue("password", options.password);
                 setIconName(options.iconName);
 				setCheckboxState("showAllBookmarks", options.showAllBookmarks);
 				setCheckboxState("showPrivateBookmarks", options.showPrivateBookmarks);
@@ -135,6 +136,7 @@
 			function saveOptions() {	
 				chrome.extension.getBackgroundPage().setOptionAll({
 					userName: getTextValue("userName"),
+                    password: getTextValue("password"),
 					iconName: getIconName(),
 					showAllBookmarks: getCheckboxState("showAllBookmarks"),
 					showPrivateBookmarks: getCheckboxState("showPrivateBookmarks"),
@@ -161,6 +163,14 @@
 					</div>
 					<div class="options-table-cell">
 						<input type="text" id="userName"/>
+					</div>
+				</div>
+                <div class="options-table-row">
+					<div class="options-table-cell">
+						<span>Password:</span>
+					</div>
+					<div class="options-table-cell">
+						<input type="password" id="password"/>
 					</div>
 				</div>
                 <div class="options-table-row">

@@ -103,6 +103,7 @@
 			function getOptionAll() {
 				return {
 					userName: getOptionUserName(),
+					password: getOptionValue("password", ""),
 					iconName: getOptionIconName(),
 					showAllBookmarks: getOptionShowAllBookmarks(),
 					showPrivateBookmarks: getOptionShowPrivateBookmarks(),
@@ -117,6 +118,7 @@
 
 			function setOptionAll(value) {
 				setOptionValue("userName", value.userName);
+				setOptionValue("password", value.password);
 				setOptionValue("iconName", value.iconName);
 				setOptionValue("showAllBookmarks", value.showAllBookmarks);
 				setOptionValue("showPrivateBookmarks", value.showPrivateBookmarks);
