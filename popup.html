@@ -114,26 +114,42 @@
 		</script>
 		
 		<script>
-            function fetchTest() {
+            function fetchBookmarks(count) {
+                count = count || 10;
                 var target_div = $("#bookmarkPane");
 
+                // show a spinner until we complete the ajax request
+                target_div.html("");
                 var spinner = $("<div style='text-align:center; width:100%; padding: 4px;'><img src='spinner.gif'/></div>");
                 target_div.append(spinner);
 
                 function addPost(postItem) {
-                    var href = postItem.attr("href");
+                    var post_href = postItem.attr("href");
+                    var post_tstamp = postItem.attr("time");
+                    var post_desc = postItem.attr("description");
                     var lnkDiv = $("<div class='bookmarkItem'></div>");
-                    var lnk = $("<a href='#'>" + postItem.attr("description") + "</a>");
-                    lnk.appendTo(lnkDiv);
-                    lnk.attr("title", href);
-                    lnk.click(function() {
-                        openUrl(href)
-                    });
+
+                    // create a link
+                    $("<a href='#'></a>")
+                            .attr("title", post_href)
+                            .text(post_desc)
+                            .click(function() {
+                                openUrl(post_href)
+                            })
+                            .appendTo(lnkDiv);
+
+                    // Attempt to parse the time string, give up if we can't parse ISO8601
+                    if (post_tstamp && Date && Date.parse && typeof Date.parse(post_tstamp) === "number") {
+                        var timeAgoMillis = new Date().getTime() - Date.parse(post_tstamp);
+                        var daysAgo = Math.floor(timeAgoMillis / (24 * 3600 * 1000));
+                        var fmt_time = (daysAgo > 0) ? (daysAgo + " days ago") : "today";
+                        $("<div style='color:#333333; font-size: 0.7em'>" + fmt_time + " days ago</div>").appendTo(lnkDiv);
+                    }
                     lnkDiv.appendTo(target_div);
                 }
 
                 $.ajax({
-                    url: "https://api.pinboard.in/v1/posts/recent?count=25",
+                    url: "https://api.pinboard.in/v1/posts/recent?count=" + count,
                     username:pinboardOptions.userName,
                     password:pinboardOptions.password,
                     cache: false,
@@ -156,7 +172,6 @@
             div#bookmarkPane {
                 font: normal 12px helvetica, arial, verdana;
                 color: #555;
-                /*background-color: #fff;*/
                 border-top: 1px solid #eee
             }
 			div.bookmarkItem {
@@ -178,8 +193,8 @@
   		<div id="menu">
   		</div>
 		<div id="bookmarkPane" style="display:hidden">
-            <div id="fetchItem" class="menu-item iconClock" style="" onclick="fetchTest();">
-                Latest
+            <div id="fetchItem" class="menu-item iconClock" style="" onclick="fetchBookmarks(25);">
+                Latest Bookmarks
             </div>
 		</div>
 	</body>
